@@ -43,7 +43,7 @@ func is_within_bounds(cell_coordinates: Vector2) -> bool:
 # The Vector2 class comes with its `Vector2.clamp()` method, but it doesn't work the same way: it
 # limits the vector's length instead of clamping each of the vector's components individually.
 # That's why we need to code a new method.
-func clamp(grid_position: Vector2) -> Vector2:
+func grid_clamp(grid_position: Vector2) -> Vector2:
 	var out := grid_position
 	# FLAG are these supposed to be out.clamp calls?
 	out.x = clamp(out.x, 0, size.x - 1.0)

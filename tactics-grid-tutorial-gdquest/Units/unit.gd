@@ -37,13 +37,13 @@ var _is_walking := false:
 
 @onready var _sprite: Sprite2D = $PathFollow2D/Sprite
 @onready var _anim_player: AnimationPlayer = $AnimationPlayer
-@onready var _path_follow_2d: PathFollow2D = $PathFollow2D
+@onready var _path_follow: PathFollow2D = $PathFollow2D
 
 
 # When changing the `cell`'s value, we don't want to allow coordinates outside the grid, so we clamp
 # them.
 func set_cell(value: Vector2) -> void:
-	cell = grid.clamp(value)
+	cell = grid.grid_clamp(value)
 
 # The `is_selected` property toggles playback of the "selected" animation.
 func set_is_selected(value: bool) -> void:
@@ -77,3 +77,75 @@ func set_skin_offset(value: Vector2) -> void:
 func _set_is_walking(value: bool) -> void:
 	_is_walking = value
 	set_process(value)
+
+
+# Emitted when the unit reached the end of a path along which it was walking.
+# We'll use this to notify the game board that a unit reached its destination and we can let the
+# player select another unit.
+signal walk_finished
+
+
+func _ready() -> void:
+	# We'll use the `_process()` callbck to move the unit along a path.  Unless it has a path to
+	# walk, we don't want it to update every frame. See `walk_along()` below.
+	set_process(false)
+
+	# The following lines initialize the `cell` property and snap the unit to the cell's center on the map.
+	self.cell = grid.calculate_grid_coordinates(position)
+	position = grid.calculate_map_position(cell)
+
+	if not Engine.is_editor_hint():
+		# We create the curve resource here because creating it in the editor prevents us from
+		# moving the unit.
+		curve = Curve2D.new()
+	
+	var points := [
+		Vector2(2, 2),
+		Vector2(2, 5),
+		Vector2(8, 5),
+		Vector2(8, 7),
+	]
+
+
+# When active, moves the unit along its `curve` with the help of the PathFollow2D node.
+func _process(delta: float) -> void:
+	# Every frame, the `PathFollow2D.offset` property moves the sprites along the `curve`.
+	# The great thing about this is it moves an exact number of pixels taking turns into account.
+	_path_follow.offset += move_speed * delta
+
+	# When we increase the `offset` above, the `unit_offset` also updates. It represents how far you
+	# are along the `curve` in percent, where a value of `1.0` means you reached the end.
+	# When that is the case, the unit is done moving.
+	if _path_follow.unit_offset >= 1.0:
+		# Setting `_is_walking` to `false` also turns off processing.
+		self._is_walking = false
+		# Below, we reset the offset to `0.0`, which snaps the sprites back to the Unit node's
+		# position, we position the node to the center of the target grid cell, and we clear the curve.
+		# In the process loop, we only moved the sprite, and not the unit itself. The following
+		# lines move the unit in a way that's transparent to the player.
+		_path_follow.offset = 0.0
+		position = grid.calculate_map_position(cell)
+		curve.clear_points()
+		# Finally, we emit a signal. We'll use this one with the game board.
+		emit_signal("walk_finished")
+
+
+# Starts walking along the `path`.
+# `path` is an array of grid coordinates that the function converts to map coordinates.
+func walk_along(path: PackedVector2Array) -> void:
+	if path.is_empty():
+		return
+	
+	# This code converts the `path` to points on the `curve`. That property comes from the `Path2D`
+	# class the Unit extends.
+	curve.add_point(Vector2.ZERO)
+	for point in path:
+		curve.add_point(grid.calculate_map_position(point) - position)
+	# We instantly change the unit's cell to the target position. You could also do that when it
+		# reaches the end of the path, using `grid.calculate_grid_coordinates()`, instead.
+		# I did it here because we have the coordinates provided by the `path` argument.
+		# The cell itself represents the grid coordinates the unit will stand on.
+		cell = path[-1]
+		# The `_is_walking` property triggers the move animation and turns on `_process()` See
+		# `_set_is_walking()` below.
+		self._is_walking = true
