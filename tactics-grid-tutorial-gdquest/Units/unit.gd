@@ -128,7 +128,7 @@ func _process(delta: float) -> void:
 		position = grid.calculate_map_position(cell)
 		curve.clear_points()
 		# Finally, we emit a signal. We'll use this one with the game board.
-		emit_signal("walk_finished")
+		walk_finished.emit()
 
 
 # Starts walking along the `path`.
