@@ -105,25 +105,26 @@ func _ready() -> void:
 		Vector2(8, 5),
 		Vector2(8, 7),
 	]
+	walk_along(PackedVector2Array(points))
 
 
 # When active, moves the unit along its `curve` with the help of the PathFollow2D node.
 func _process(delta: float) -> void:
 	# Every frame, the `PathFollow2D.offset` property moves the sprites along the `curve`.
 	# The great thing about this is it moves an exact number of pixels taking turns into account.
-	_path_follow.offset += move_speed * delta
+	_path_follow.progress += move_speed * delta
 
 	# When we increase the `offset` above, the `unit_offset` also updates. It represents how far you
 	# are along the `curve` in percent, where a value of `1.0` means you reached the end.
 	# When that is the case, the unit is done moving.
-	if _path_follow.unit_offset >= 1.0:
+	if _path_follow.progress_ratio >= 1.0:
 		# Setting `_is_walking` to `false` also turns off processing.
 		self._is_walking = false
 		# Below, we reset the offset to `0.0`, which snaps the sprites back to the Unit node's
 		# position, we position the node to the center of the target grid cell, and we clear the curve.
 		# In the process loop, we only moved the sprite, and not the unit itself. The following
 		# lines move the unit in a way that's transparent to the player.
-		_path_follow.offset = 0.0
+		_path_follow.progress = 0.0
 		position = grid.calculate_map_position(cell)
 		curve.clear_points()
 		# Finally, we emit a signal. We'll use this one with the game board.
