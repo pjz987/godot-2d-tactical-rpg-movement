@@ -10,12 +10,12 @@ extends Node2D
 # another node handle the interaction.
 
 # Emitted when clicking on the currently hovered cell or when pressing "ui_accept".
-signal accept_pressed(cell)
+signal  accept_pressed(cell)
 # Emitted when the cursor moved to a new cell.
 signal moved(new_cell)
 
 # Grid resource, giving the node access to the grid size, and more.
-@export var grid: Resource = preload("res://GameBoard/grid.tres")
+@export var grid: Resource
 # Time before the cursor can move again in seconds.
 # You can see how we use it in the unhandle input function below.
 @export var ui_cooldown := 0.1
@@ -36,15 +36,17 @@ func _ready() -> void:
 
 
 func _unhandled_imput(event: InputEvent) -> void:
+	print('this should fuckin run')
 	# If the user moves the mouse, we capture that input and update the nodes' cell in priority.
 	if event is InputEventMouseMotion:
+		print('this run???')
 		self.cell = grid.calculate_grid_coordinates(event.position)
 	# If we are already hovering the cell and click on it, or we press the enter key, the player
 	# wants to interact with that cell.
 	elif event.is_action_pressed("click") or event.is_action_pressed("ui_accept"):
 		# In that case, we emit a signal to let another node handle that input. The game board will
 		# have the responsibility of looking at the cell's content.
-		emit_signal("accept_pressed", cell)
+		accept_pressed.emit(cell)
 		get_tree().set_input_as_handled()
 	
 	# The code below is for the cursor's movement.
@@ -82,6 +84,7 @@ func _draw() -> void:
 
 # This function controls the cursor's current position.
 func set_cell(value: Vector2) -> void:
+	print('this???')
 	# We first clamp the cell coordinates and ensure that we weren't trying to move outside the
 	# grid's boundaries.
 	var new_cell: Vector2 = grid.grid_clamp(value)
@@ -93,5 +96,5 @@ func set_cell(value: Vector2) -> void:
 	# cooldown timer that will limit the rate at which the cursor moves when we keep the direction
 	# key down.
 	position = grid.calculate_map_position(cell)
-	emit_signal("moved", cell)
+	moved.emit(cell)
 	_timer.start()

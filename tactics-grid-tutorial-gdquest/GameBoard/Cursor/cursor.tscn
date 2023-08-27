@@ -12,4 +12,5 @@ rotation = 2.35619
 texture = ExtResource("1_18mbc")
 
 [node name="Timer" type="Timer" parent="."]
+wait_time = 0.1
 one_shot = true
