@@ -23,7 +23,6 @@ signal moved(new_cell)
 # Coordinates of the current cell the cursor is hovering.
 var cell := Vector2.ZERO:
 	set(value):
-		print('what the fuckin fuckin fuck!!!!!?!?!??!?!?!?')
 		# We first clamp the cell coordinates and ensure that we aren't
 		#	trying to move outside the grid boundaries
 		var new_cell: Vector2 = grid.grid_clamp(value)
@@ -49,12 +48,9 @@ func _ready() -> void:
 	_timer.wait_time = ui_cooldown
 	position = grid.calculate_map_position(cell)
 
-
-func _unhandled_imput(event: InputEvent) -> void:
-	print('this should fuckin run')
+func _unhandled_input(event: InputEvent) -> void:
 	# If the user moves the mouse, we capture that input and update the nodes' cell in priority.
 	if event is InputEventMouseMotion:
-		print('this run???')
 		self.cell = grid.calculate_grid_coordinates(event.position)
 	# If we are already hovering the cell and click on it, or we press the enter key, the player
 	# wants to interact with that cell.
@@ -62,7 +58,7 @@ func _unhandled_imput(event: InputEvent) -> void:
 		# In that case, we emit a signal to let another node handle that input. The game board will
 		# have the responsibility of looking at the cell's content.
 		accept_pressed.emit(cell)
-		get_tree().set_input_as_handled()
+		get_viewport().set_input_as_handled()
 	
 	# The code below is for the cursor's movement.
 	# The following lines make some preliminary checks to see whether the cursor should move or not
@@ -99,7 +95,6 @@ func _draw() -> void:
 
 # This function controls the cursor's current position.
 func set_cell(value: Vector2) -> void:
-	print('this???')
 	# We first clamp the cell coordinates and ensure that we weren't trying to move outside the
 	# grid's boundaries.
 	var new_cell: Vector2 = grid.grid_clamp(value)
